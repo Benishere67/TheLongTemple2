@@ -5,7 +5,7 @@ using UnityEngine;
 public class DUGAN_CREEP : MonoBehaviour
 {
     public UnityEngine.AI.NavMeshAgent ghost;
-    public GameObject playerHead;
+    //public GameObject playerHead;
     public GameObject player;
 
     public float ghostMode;
@@ -18,6 +18,8 @@ public class DUGAN_CREEP : MonoBehaviour
     public float lightTimer;
     public bool inLight;
 
+    public bool inSight;
+        
     void Start()
     {
         wanderReset = false;
@@ -25,7 +27,7 @@ public class DUGAN_CREEP : MonoBehaviour
         ghost = this.GetComponent<UnityEngine.AI.NavMeshAgent>();
         ghostMode = 0;
         player = GameObject.Find("Player");
-        playerHead = GameObject.Find("HeadCollider");
+        //playerHead = GameObject.Find("HeadCollider");
         ghost.SetDestination(player.transform.position);
         lightTimer = 4f;
         inLight = false;
@@ -45,36 +47,25 @@ public class DUGAN_CREEP : MonoBehaviour
         wanderReset = true;
     }
 
-    void PlayerDetection()
+    private void OnTriggerEnter(Collider other)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(ghost.transform.position, 150);
-        for (int i = 0; i < hitColliders.Length; i++)
+        if(other.gameObject.CompareTag("PLAYER_SIGHT"))
         {
-            GameObject hitCollider = hitColliders[i].gameObject;
-            if (hitCollider.CompareTag("NotHidden"))
-            {
-                ghostMode = 1;
-            }
+            inSight = true;
         }
     }
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.tag == "Flashlight")
+        if (other.gameObject.CompareTag("PLAYER_SIGHT"))
         {
-            inLight = true;
+            inSight = false;
         }
     }
 
-    void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.tag == "Flashlight")
-        {
-            inLight = false;
-            lightTimer = 4f;
-            ghostMode = 0;
-        }
-    }
+
+
+
 
     void Update()
     {
@@ -84,26 +75,15 @@ public class DUGAN_CREEP : MonoBehaviour
             {
                 Wandering();
             }
-            PlayerDetection();
+      
         }
         else if (ghostMode == 1)
         {
             ghost.SetDestination(player.transform.position);
 
-            if (playerHead.tag == "Hidden")
-            {
-                ghostMode = 0;
-            }
+      
         }
 
-        if (inLight == true)
-        {
-            lightTimer -= Time.deltaTime;
-        }
-
-        if (lightTimer <= 0)
-        {
-            Destroy(gameObject);
-        }
+        
     }
 }
