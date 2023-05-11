@@ -1,89 +1,42 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class DUGAN_CREEP : MonoBehaviour
 {
-    public UnityEngine.AI.NavMeshAgent ghost;
-    //public GameObject playerHead;
-    public GameObject player;
+    public float wanderRadius = 10f;
+    public float wanderTimer = 5f;
 
-    public float ghostMode;
+    private NavMeshAgent agent;
+    private float timer;
 
-    public float wanderX;
-    public float wanderZ;
-    public Vector3 wanderDestination;
-    public bool wanderReset;
-
-    public float lightTimer;
-    public bool inLight;
-
-    public bool inSight;
-        
-    void Start()
+    private void OnEnable()
     {
-        wanderReset = false;
-        InvokeRepeating("WanderTimer", 0f, 10f);
-        ghost = this.GetComponent<UnityEngine.AI.NavMeshAgent>();
-        ghostMode = 0;
-        player = GameObject.Find("Player");
-        //playerHead = GameObject.Find("HeadCollider");
-        ghost.SetDestination(player.transform.position);
-        lightTimer = 4f;
-        inLight = false;
+        agent = GetComponent<NavMeshAgent>();
+        timer = wanderTimer;
     }
 
-    void WanderTimer()
+    private void Update()
     {
-        wanderReset = false;
-    }
+        timer += Time.deltaTime;
 
-    void Wandering()
-    {
-        wanderX = ghost.transform.position.x + Random.Range(-200, 200);
-        wanderZ = ghost.transform.position.y + Random.Range(-200, 200);
-        wanderDestination = new Vector3(wanderX, 0, wanderZ);
-        ghost.SetDestination(wanderDestination);
-        wanderReset = true;
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if(other.gameObject.CompareTag("PLAYER_SIGHT"))
+        if (timer >= wanderTimer)
         {
-            inSight = true;
+            Vector3 newPos = RandomNavSphere(transform.position, wanderRadius, -1);
+            agent.SetDestination(newPos);
+            timer = 0f;
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    private Vector3 RandomNavSphere(Vector3 origin, float dist, int layermask)
     {
-        if (other.gameObject.CompareTag("PLAYER_SIGHT"))
-        {
-            inSight = false;
-        }
-    }
+        Vector3 randDir = Random.insideUnitSphere * dist;
 
+        randDir += origin;
 
+        NavMeshHit navHit;
 
+        NavMesh.SamplePosition(randDir, out navHit, dist, layermask);
 
-
-    void Update()
-    {
-        if (ghostMode == 0)
-        {
-            if (wanderReset == false)
-            {
-                Wandering();
-            }
-      
-        }
-        else if (ghostMode == 1)
-        {
-            ghost.SetDestination(player.transform.position);
-
-      
-        }
-
-        
+        return navHit.position;
     }
 }
